@@ -1,0 +1,528 @@
+import React, { useState } from 'react';
+
+// Main App component
+const App = () => {
+    // State variables for user inputs and suggestions
+    const [weight, setWeight] = useState('65'); // User's weight input (kg) - Default to 65 for slider
+    const [bodyType, setBodyType] = useState(''); // User's body type selection
+    const [age, setAge] = useState('30'); // User's age input (default to 30 for slider)
+    const [gender, setGender] = useState(''); // User's gender selection
+    const [healthIssues, setHealthIssues] = useState(''); // User's input for health issues/injuries
+    
+    // New optional state variables
+    const [bmi, setBmi] = useState(''); // BMI input
+    const [bodyFatPercentage, setBodyFatPercentage] = useState(''); // Body Fat Percentage input
+    const [muscleMass, setMuscleMass] = useState(''); // Muscle Mass input
+
+    const [suggestedExercises, setSuggestedExercises] = useState([]); // List of suggested exercises
+    const [healthDisclaimerText, setHealthDisclaimerText] = useState(''); // Dynamic disclaimer text
+    const [showModal, setShowModal] = useState(false); // State to control modal visibility
+    const [modalMessage, setModalMessage] = useState(''); // Message to display in the modal
+
+    // Define body type options for card selection
+    const bodyTypeOptions = [
+        { value: 'lean', label: '마른 체형' },
+        { value: 'average', label: '보통 체형' },
+        { value: 'chubby', label: '통통한 체형' },
+        { value: 'muscular', label: '근육질 체형' }
+    ];
+
+    // Function to handle form submission
+    const handleSubmit = (e) => {
+        e.preventDefault(); // Prevent default form submission behavior
+
+        // Input validation for mandatory fields
+        if (!weight || isNaN(weight) || parseFloat(weight) <= 0) {
+            setModalMessage('몸무게를 정확히 입력해주세요. ⚖️');
+            setShowModal(true);
+            return;
+        }
+        if (!bodyType) {
+            setModalMessage('체형을 선택해주세요. 🧍');
+            setShowModal(true);
+            return;
+        }
+        if (!age || isNaN(age) || parseInt(age, 10) <= 0) {
+            setModalMessage('나이를 정확히 입력해주세요. 🎂');
+            setShowModal(true);
+            return;
+        }
+        if (!gender) {
+            setModalMessage('성별을 선택해주세요. 🚻');
+            setShowModal(true);
+            return;
+        }
+
+        let exercises = []; // Array to hold exercise suggestions
+        let disclaimer = ''; // String to hold the disclaimer message
+        const weightNum = parseFloat(weight);
+        const ageNum = parseInt(age, 10);
+
+        // --- Logic for exercise recommendation ---
+
+        // 1. Prioritize health issues/injuries: If any health issues are noted, provide a cautious, general plan.
+        if (healthIssues.trim() !== '') {
+            exercises = [
+                '🚨 **건강 문제/부상 특별 가이드라인**',
+                '---',
+                '📌 **전문가 상담 필수:** 현재 건강 문제나 부상이 있으므로, 모든 운동은 반드시 의사 또는 물리치료사와 상담 후 진행해야 합니다. 개인에게 맞는 정확한 운동 계획을 세우는 것이 중요합니다.',
+                '🤸‍♂️ **저강도 활동 (10-20분):**',
+                '  - 통증이 없는 범위 내에서 가벼운 걷기 (🚶), 실내 자전거 (🚴), 수영 (🏊‍♀️) 등 저충격 유산소 운동을 시작하세요.',
+                '🧘‍♀️ **부드러운 스트레칭:**',
+                '  - 통증 없는 범위 내에서 관절 가동성을 늘리는 부드러운 스트레칭을 천천히 진행하세요. (예: 폼롤러, 요가)',
+                '🩹 **전문가 지도 코어/재활:**',
+                '  - 전문가의 지도 하에 코어 강화 운동이나 재활 운동을 고려하세요. (예: 플랭크, 브릿지)',
+                '⚠️ **중요 주의:** 운동 중 통증이 발생하면 즉시 운동을 중단하고 전문가의 도움을 받으세요. 무리한 운동은 부상을 악화시킬 수 있습니다.'
+            ];
+            disclaimer = '⚠️ 위 플랜은 일반적인 가이드라인입니다. 개인의 특수한 건강 상태를 반드시 전문가와 상의하여 안전한 운동을 진행하세요.';
+        } else {
+            // 2. No health issues: Apply logic based on age, body type, and weight.
+
+            // Personalized opening message
+            exercises.push(`✨ ${ageNum}세 ${gender === 'male' ? '남성' : '여성'} ${weightNum}kg이신 당신을 위한 **맞춤 운동 플랜**입니다!`);
+            
+            // 3. Apply age-based modifications (general guidance) at the top of the specific plan
+            if (ageNum >= 60) {
+                exercises.push('👵👴 **60세 이상 특별 안내:** 운동 강도를 조절하고, 관절에 무리가 가지 않도록 특히 주의하세요. 모든 동작은 천천히 정확하게 수행하는 것이 중요합니다.');
+            } else if (ageNum >= 40) {
+                exercises.push('🧑‍🦱👩‍🦱 **40대 이상 특별 안내:** 관절 보호와 유연성 운동에 더 신경 써주세요. 본 운동 전후 스트레칭에 충분한 시간을 할애하세요.');
+            }
+
+            exercises.push('---'); // Divider after initial greetings/age-specific tips
+
+            // Initialize exercises based on body type
+            switch (bodyType) {
+                case 'lean': // 마른 체형 (Lean body type) - focus on muscle gain & gentle cardio
+                    exercises.push(
+                        '🎯 **오늘의 목표:** 근육량 증대 및 전반적인 체력 향상',
+                        '---',
+                        '🔥 **워밍업 (5-10분):**',
+                        '  - 🏃 가벼운 조깅 또는 제자리 걷기 (몸을 깨우고 혈액순환 촉진)',
+                        '  - 🤸‍♀️ 동적 스트레칭 (관절 가동 범위 넓히기, 부상 예방)',
+                        '💪 **본 운동 (30-40분) - 근력 집중:**',
+                        '  - 🦵 스쿼트 (맨몸 또는 가벼운 중량): 3세트 x 12회 (하체와 코어 강화)',
+                        '  - 🦵 런지 (각 다리): 3세트 x 10회 (하체 균형 및 근력 증대)',
+                        '  - 👐 푸쉬업 (무릎 푸쉬업 가능): 3세트 x 10-12회 (상체 전면 및 코어)',
+                        '  - 🏋️ 덤벨 로우 (가벼운 중량): 3세트 x 10-12회 (등 근육 강화, 자세 개선)',
+                        '  - 🤸 플랭크: 3세트 x 30초 유지 (코어 안정성 강화)',
+                        '🚶‍♂️ **유산소 (20-30분):**',
+                        '  - 보통 속도로 걷기 또는 가볍게 조깅, 실내 자전거 (심폐 지구력 향상, 칼로리 소모)',
+                        '🧘‍♀️ **쿨다운 (5-10분):**',
+                        '  - 전신 정적 스트레칭, 심호흡 (근육 이완 및 회복 촉진)',
+                        '💡 **추가 팁:** 운동 후 30분 이내 단백질 섭취는 근육 회복에 도움이 됩니다. 점진적으로 횟수나 무게를 늘려보세요!'
+                    );
+                    break;
+                case 'average': // 보통 체형 (Average body type) - balanced approach
+                    exercises.push(
+                        '🎯 **오늘의 목표:** 균형 잡힌 근력과 유산소 능력 향상',
+                        '---',
+                        '🔥 **워밍업 (10분):**',
+                        '  - 🤸‍♀️ 동적 스트레칭, 관절 가동성 운동',
+                        '  - 🏃 가벼운 유산소 (줄넘기, 제자리 뛰기)로 심박수 올리기',
+                        '🏋️‍♂️ **본 운동 (40-50분) - 전신 균형:**',
+                        '  - 🏋️ 벤치프레스 또는 푸쉬업: 4세트 x 8-10회 (가슴, 어깨, 삼두)',
+                        '  - 🏋️ 데드리프트 (바벨 또는 덤벨): 3세트 x 8회 (전신 후면 사슬 강화, 핵심 운동)',
+                        '  - 🏋️ 오버헤드프레스: 3세트 x 8-10회 (어깨 근력 및 안정성)',
+                        '  - 🏋️ 바벨 로우 또는 덤벨 로우: 3세트 x 10회 (등 근육 발달)',
+                        '  - 🦵 레그 프레스 또는 스쿼트: 3세트 x 10회 (하체 전체)',
+                        '  - � 러시안 트위스트: 3세트 x 15회 (양쪽) (복근 및 코어)',
+                        '🏃‍♀️ **유산소 (30-40분):**',
+                        '  - 달리기, 수영, 또는 인터벌 트레이닝 (HIIT) 20분 후 중강도 유산소 10-20분 (심폐 지구력 및 체지방 연소)',
+                        '🤸‍♀️ **쿨다운 (10-15분):**',
+                        '  - 전신 정적 스트레칭, 폼롤러 (근육 피로 해소, 유연성 증진)',
+                        '💡 **추가 팁:** 다양한 운동 종류를 시도하여 즐거움을 찾고, 꾸준히 기록하며 성장하는 모습을 확인해보세요!'
+                    );
+                    break;
+                case 'chubby': // 통통한 체형 (Chubby body type) - focus on calorie burn, low impact
+                    if (weightNum > 80) { // Higher weight, suggest lower impact cardio
+                        exercises.push(
+                            '🎯 **오늘의 목표:** 체지방 감소 및 관절 부담 최소화',
+                            '---',
+                            '🔥 **워밍업 (10-15분):**',
+                            '  - 🚶‍♂️ 느린 걷기 또는 실내 자전거, 관절 스트레칭 (몸에 부담 없이 준비)',
+                            '🚶‍♀️ **유산소 (45-60분):**',
+                            '  - 저충격 유산소 (빠른 걷기, 실내 자전거, 수영)로 꾸준히 진행하세요. (꾸준함이 중요! 체지방 연소에 집중)',
+                            '💪 **본 운동 (20-30분) - 맨몸/저강도 근력:**',
+                            '  - 🦵 맨몸 스쿼트 (의자 스쿼트 활용): 3세트 x 12-15회 (하체 기본 근력)',
+                            '  - 🦵 런지 (워킹 런지): 3세트 x 10회 (각 다리) (하체 및 균형감각)',
+                            '  - 👐 월 푸쉬업 또는 무릎 푸쉬업: 3세트 x 10-12회 (상체 근력 입문)',
+                            '  - 🏋️ 의자 딥스: 3세트 x 8-10회 (삼두 및 어깨)',
+                            '  - 🤸 플랭크: 3세트 x 20-30초 유지 (코어 안정성)',
+                            '🧘‍♀️ **쿨다운 (10-15분):**',
+                            '  - 전신 정적 스트레칭 (특히 하체, 고관절 스트레칭에 집중), 심호흡 (운동 후 긴장 완화)',
+                            '💡 **추가 팁:** 운동 전후 스트레칭은 필수! 식단 관리와 병행하면 효과가 두 배가 됩니다.'
+                        );
+                    } else { // Moderately chubby, more varied cardio
+                        exercises.push(
+                            '🎯 **오늘의 목표:** 체지방 감소 및 근력 강화 병행',
+                            '---',
+                            '🔥 **워밍업 (10분):**',
+                            '  - 🏃 가벼운 조깅, 동적 스트레칭 (몸의 활성화)',
+                            '🏃‍♂️ **유산소 (40-50분):**',
+                            '  - 조깅, 스텝퍼, 로잉머신 또는 인터벌 트레이닝 (20분) 후 중강도 유산소 20-30분 (칼로리 소모 극대화)',
+                            '🏋️‍♀️ **본 운동 (30-40분) - 전신 근력:**',
+                            '  - 🦵 스쿼트 (맨몸 또는 가벼운 중량): 3세트 x 10-12회 (하체 핵심 운동)',
+                            '  - 🏋️ 덤벨 데드리프트: 3세트 x 10회 (후면 사슬 강화, 전신 협응력)',
+                            '  - 👐 푸쉬업: 3세트 x 10-12회 (상체 전반)',
+                            '  - 🏋️ 덤벨 로우: 3세트 x 10-12회 (등 근육 강화)',
+                            '  - ⛰️ 마운틴 클라이머: 3세트 x 15회 (각 다리) (코어 및 전신 유산소)',
+                            '🧘‍♂️ **쿨다운 (10-15분):**',
+                            '  - 전신 정적 스트레칭 (운동 부위 집중), 심호흡 (몸의 긴장 이완)',
+                            '💡 **추가 팁:** 운동 목표를 구체적으로 설정하고, 주 3-4회 꾸준히 실천하는 것이 중요합니다.'
+                        );
+                    }
+                    break;
+                case 'muscular': // 근육질 체형 (Muscular body type) - focus on maintenance, advanced, flexibility
+                    exercises.push(
+                        '🎯 **오늘의 목표:** 근육량 유지 및 강화, 유연성 증진, 회복 촉진',
+                        '---',
+                        '🔥 **워밍업 (10분):**',
+                        '  - 🤸‍♂️ 관절 가동성 운동 (어깨 돌리기, 고관절 회전), 가벼운 밴드 운동 (본격적인 운동 전 근육 활성화)',
+                        '🏋️‍♂️ **본 운동 (45-60분) - 고강도 분할 운동 (예시):**',
+                        '  - 🏋️ **가슴 & 삼두:** 벤치프레스, 덤벨 플라이, 오버헤드 익스텐션 등 (3-4세트 x 6-8회, 고중량 저반복으로 근력 집중)',
+                        '  - 🏋️ **등 & 이두:** 풀업/랫풀다운, 바벨 로우, 덤벨 컬 등',
+                        '  - 🏋️ **하체 & 어깨:** 스쿼트, 데드리프트, 레그 프레스, 오버헤드프레스 등',
+                        '  - **운동 강도:** 슈퍼세트 또는 드롭세트 활용 고려 (근육 성장 촉진)',
+                        '🏃‍♀️ **액티브 리커버리 (20-30분):**',
+                        '  - 가벼운 유산소 (조깅, 사이클) 또는 수영 (혈액순환 촉진, 근육통 완화)',
+                        '🤸‍♀️ **유연성 및 모빌리티 (20분):**',
+                        '  - 폼롤러 마사지 (근막 이완), 동적 스트레칭, 정적 스트레칭 (특히 운동 부위 집중) (부상 방지, 회복 가속화)',
+                        '🍎 **영양 & 휴식:**',
+                        '  - 충분한 단백질 섭취와 질 높은 수면 (😴)은 근육 성장과 회복에 필수입니다!'
+                    );
+                    break;
+                default:
+                    exercises = ['체형을 선택해주세요.'];
+                    break;
+            }
+
+            disclaimer = '* 이 플랜은 일반적인 가이드라인이며, 개인의 건강 상태와 운동 능력에 따라 조절해야 합니다. 필요시 전문가와 상담하세요.';
+        }
+
+        setSuggestedExercises(exercises); // Update state with generated exercises
+        setHealthDisclaimerText(disclaimer); // Set the appropriate disclaimer text
+    };
+
+    // Function to handle form reset
+    const handleReset = () => {
+        setWeight('65'); // Reset weight to default 65
+        setBodyType('');
+        setAge('30'); // Reset age to default 30
+        setGender('');
+        setHealthIssues('');
+        setBmi(''); // Reset BMI
+        setBodyFatPercentage(''); // Reset Body Fat Percentage
+        setMuscleMass(''); // Reset Muscle Mass
+        setSuggestedExercises([]);
+        setHealthDisclaimerText('');
+        setShowModal(false);
+        setModalMessage('');
+    };
+
+    // JSX for the main application UI
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center p-4 font-inter">
+            {/* Custom Styles for Slider Thumb */}
+            <style>
+                {`
+                input[type="range"]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    width: 24px; /* Larger thumb */
+                    height: 24px; /* Larger thumb */
+                    background: #ffffff; /* White color */
+                    border: 3px solid #3b82f6; /* Tailwind blue-500 for border */
+                    border-radius: 50%;
+                    cursor: grab;
+                    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; /* Transition border-color and box-shadow */
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    margin-top: calc(-12px + 4px); /* Center thumb vertically: -(thumb_height/2) + (track_height/2) */
+                }
+
+                input[type="range"]::-webkit-slider-thumb:active {
+                    transform: scale(1.1); /* Pressing animation */
+                    border-color: #1d4ed8; /* Darker blue on active (Tailwind blue-800) */
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Slightly larger shadow on active */
+                    cursor: grabbing;
+                }
+
+                input[type="range"]::-moz-range-thumb {
+                    width: 24px; /* Larger thumb */
+                    height: 24px; /* Larger thumb */
+                    background: #ffffff; /* White color */
+                    border: 3px solid #3b82f6; /* Tailwind blue-500 for border */
+                    border-radius: 50%;
+                    cursor: grab;
+                    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; /* Transition border-color and box-shadow */
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    margin-top: calc(-12px + 4px); /* Center thumb vertically: -(thumb_height/2) + (track_height/2) */
+                }
+
+                input[type="range"]::-moz-range-thumb:active {
+                    transform: scale(1.1); /* Pressing animation */
+                    border-color: #1d4ed8; /* Darker blue on active (Tailwind blue-800) */
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Slightly larger shadow on active */
+                    cursor: grabbing;
+                }
+
+                /* Ensure track styling if needed, though default is often fine with thumb changes */
+                input[type="range"]::-webkit-slider-runnable-track {
+                    height: 8px; /* Match height of track */
+                    background: #e5e7eb; /* Light grey track */
+                    border-radius: 4px;
+                }
+
+                input[type="range"]::-moz-range-track {
+                    height: 8px; /* Match height of track */
+                    background: #e5e7eb; /* Light grey track */
+                    border-radius: 4px;
+                }
+                `}
+            </style>
+
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full transform transition-all duration-300 hover:scale-105">
+                <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-8 font-inter">
+                    내 손안의 PT쌤 🏋️‍♂️
+                </h1>
+
+                {/* Input form */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Age Input (Moved up) */}
+                    <div>
+                        <label htmlFor="age" className="block text-lg font-medium text-gray-700 mb-2">
+                            나이 🎂 <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex items-center space-x-4">
+                            <input
+                                type="range"
+                                id="age"
+                                min="10"
+                                max="90"
+                                value={age}
+                                onChange={(e) => setAge(e.target.value)}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:border-blue-400"
+                            />
+                            <span className="text-2xl font-bold text-blue-600 w-12 text-right">{age}</span>
+                        </div>
+                    </div>
+
+                    {/* Weight Input */}
+                    <div>
+                        <label htmlFor="weight" className="block text-lg font-medium text-gray-700 mb-2">
+                            몸무게 (kg) ⚖️ <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex items-center space-x-4">
+                            <input
+                                type="range"
+                                id="weight"
+                                min="30" // Minimum weight for slider
+                                max="150" // Maximum weight for slider
+                                value={weight}
+                                onChange={(e) => setWeight(e.target.value)}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:border-blue-400"
+                            />
+                            <span className="text-2xl font-bold text-blue-600 w-12 text-right">{weight}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-lg font-medium text-gray-700 mb-2">
+                            성별 🚻 <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex space-x-4">
+                            <div
+                                className={`flex-1 p-3 rounded-xl border text-center cursor-pointer transition-all duration-200 shadow-sm
+                                    ${gender === 'male' ? 'bg-blue-100 text-blue-700 border-blue-500 font-semibold' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'}`}
+                                onClick={() => setGender('male')}
+                            >
+                                남성
+                            </div>
+                            <div
+                                className={`flex-1 p-3 rounded-xl border text-center cursor-pointer transition-all duration-200 shadow-sm
+                                    ${gender === 'female' ? 'bg-pink-100 text-pink-700 border-pink-500 font-semibold' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'}`}
+                                onClick={() => setGender('female')}
+                            >
+                                여성
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-lg font-medium text-gray-700 mb-2">
+                            체형 🧍 <span className="text-red-500">*</span>
+                        </label>
+                        <div className="grid grid-cols-2 gap-4"> {/* Use grid for 2-column layout */}
+                            {bodyTypeOptions.map((option) => (
+                                <div
+                                    key={option.value}
+                                    className={`p-4 rounded-xl border text-center cursor-pointer transition-all duration-200 shadow-sm
+                                        ${bodyType === option.value ? 'bg-purple-100 text-purple-700 border-purple-500 font-semibold' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'}`}
+                                    onClick={() => setBodyType(option.value)}
+                                >
+                                    {option.label}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* New Optional Input Fields */}
+                    <div>
+                        <label htmlFor="bmi" className="block text-lg font-medium text-gray-700 mb-2">
+                            BMI (선택 사항) 📊
+                        </label>
+                        <input
+                            type="number"
+                            id="bmi"
+                            value={bmi}
+                            onChange={(e) => setBmi(e.target.value)}
+                            placeholder="예: 22.5"
+                            step="0.1"
+                            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all duration-200 hover:border-blue-400"
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="bodyFatPercentage" className="block text-lg font-medium text-gray-700 mb-2">
+                            체지방률 (%) (선택 사항) ✨
+                        </label>
+                        <input
+                            type="number"
+                            id="bodyFatPercentage"
+                            value={bodyFatPercentage}
+                            onChange={(e) => setBodyFatPercentage(e.target.value)}
+                            placeholder="예: 18.0"
+                            step="0.1"
+                            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 resize-y transition-all duration-200 hover:border-blue-400"
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="muscleMass" className="block text-lg font-medium text-gray-700 mb-2">
+                            근육량 (kg) (선택 사항) 💪
+                        </label>
+                        <input
+                            type="number"
+                            id="muscleMass"
+                            value={muscleMass}
+                            onChange={(e) => setMuscleMass(e.target.value)}
+                            placeholder="예: 35.0"
+                            step="0.1"
+                            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 resize-y transition-all duration-200 hover:border-blue-400"
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="healthIssues" className="block text-lg font-medium text-gray-700 mb-2">
+                            부상이나 건강 문제가 있다면 알려주세요 (선택 사항) 🩹
+                        </label>
+                        <textarea
+                            id="healthIssues"
+                            value={healthIssues}
+                            onChange={(e) => setHealthIssues(e.target.value)}
+                            placeholder="예: 무릎 통증, 허리 디스크, 고혈압 등"
+                            rows="3"
+                            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900 resize-y transition-all duration-200 hover:border-blue-400"
+                        ></textarea>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col space-y-4 pt-4">
+                        <button
+                            type="submit"
+                            className="w-full bg-blue-700 text-white p-4 rounded-xl font-bold text-lg shadow-xl hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 ease-in-out transform hover:scale-100 flex items-center justify-center space-x-2"
+                        >
+                            <span>나의 플랜 받기</span> ✨
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleReset}
+                            className="w-full bg-gray-200 text-gray-800 p-4 rounded-xl font-bold text-lg shadow-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-200 ease-in-out transform hover:scale-100 flex items-center justify-center space-x-2"
+                        >
+                            <span>초기화</span> 🔄
+                        </button>
+                    </div>
+                </form>
+
+                {/* Display suggested exercises */}
+                {suggestedExercises.length > 0 && (
+                    <div className="mt-10 p-6 bg-blue-50 rounded-xl shadow-md border border-blue-200">
+                        <h2 className="text-2xl font-bold text-blue-800 mb-4 text-center">
+                            오늘의 운동 추천 💪
+                        </h2>
+                        <ul className="list-disc list-inside space-y-2 text-gray-700">
+                            {suggestedExercises.map((exercise, index) => {
+                                // Handle section dividers
+                                if (exercise === '---') {
+                                    return <div key={index} className="w-full border-t border-gray-300 my-4"></div>;
+                                }
+
+                                let icon = '';
+                                let textColorClass = 'text-gray-700'; // Default text color for exercise details
+                                let actualContent = exercise;
+
+                                // Define regex to match leading emoji and optional bolding for main headers/items
+                                const emojiMatch = exercise.match(/^(✨|🚨|📌|🤸‍♂️|🧘‍♀️|🩹|🔥|💪|🏃|🏋️|🚶‍♂️|🍎|👵👴|🧑‍🦱👩‍🦱|🦵|👐|🌀|⛰️|🏊‍♀️|🚴)\s?/);
+                                
+                                if (emojiMatch) {
+                                    icon = emojiMatch[1]; // The matched emoji
+                                    actualContent = exercise.substring(emojiMatch[0].length); // Content after the emoji
+                                    
+                                    // Determine text color based on leading emoji for emphasis
+                                    if (icon === '✨') textColorClass = 'text-blue-700';
+                                    else if (icon === '🚨' || icon === '📌' || icon === '⚠️') textColorClass = 'text-red-600';
+                                    else if (icon === '🤸‍♂️' || icon === '🧘‍♀️') textColorClass = 'text-teal-600'; // Warm-up/Cool-down general
+                                    else if (icon === '🩹') textColorClass = 'text-orange-500'; // Recovery/Guidance
+                                    else if (icon === '🔥') textColorClass = 'text-orange-600'; // Goal/Main section header
+                                    else if (icon === '💪' || icon === '🏋️') textColorClass = 'text-purple-600'; // Strength/Workout
+                                    else if (icon === '🏃' || icon === '🚶‍♂️' || icon === '🏊‍♀️' || icon === '🚴') textColorClass = 'text-blue-600'; // Cardio
+                                    else if (icon === '🍎' || icon === '😴') textColorClass = 'text-lime-600'; // Nutrition/Rest
+                                    else if (icon === '👵👴' || icon === '🧑‍🦱👩‍‍🦱') textColorClass = 'text-gray-600'; // Age specific
+                                    else if (icon === '🦵' || icon === '👐' || icon === '🌀' || icon === '⛰️') textColorClass = 'text-indigo-600'; // Specific exercises
+                                } else {
+                                    // Default bullet for items without a specific leading emoji
+                                    icon = '▪';
+                                    textColorClass = 'text-blue-700';
+                                }
+
+                                // Convert markdown bolding (**text**) to HTML <strong>
+                                const renderedContent = actualContent.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+
+                                return (
+                                    <li key={index} className="flex items-start my-2"> {/* Added my-2 for more spacing */}
+                                        <span className={`mr-2 ${textColorClass}`}>
+                                            {icon === '▪' ? icon : <span className="inline-block w-6 text-center">{icon}</span>}
+                                        </span>
+                                        <span className="flex-1" dangerouslySetInnerHTML={{ __html: renderedContent }} />
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                        <p className={`mt-4 text-sm text-center italic ${healthIssues.trim() !== '' ? 'text-red-600 font-semibold' : 'text-gray-600'}`}>
+                            {healthDisclaimerText}
+                        </p>
+                    </div>
+                )}
+
+                {/* Custom Modal for alerts */}
+                {showModal && (
+                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                            <h3 className="text-xl font-bold text-gray-800 mb-4">알림 🔔</h3>
+                            <p className="text-gray-700 mb-6">{modalMessage}</p>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 transition duration-200"
+                            >
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+            {/* Tailwind CSS Script for compilation */}
+            <script src="https://cdn.tailwindcss.com"></script>
+        </div>
+    );
+};
+
+export default App;
+�
